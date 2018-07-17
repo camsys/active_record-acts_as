@@ -22,7 +22,30 @@ module ActiveRecord
               when :joins
                 joins(name)
               else
-                includes(name)
+                erd_hierarchy = []
+                current_klass = name
+                while current_klass.present?
+                  erd_hierarchy << current_klass
+                  current_klass =
+                      begin
+                        current_klass.to_s.classify.constantize.acting_as_model.name.underscore.to_sym
+                      rescue
+                        nil
+                      end
+                end
+
+                idx = erd_hierarchy.length-2
+                join_relations = Hash.new
+                join_relations[erd_hierarchy[idx]] = erd_hierarchy[idx+1]
+                idx -= 1
+                while idx >= 0
+                  tmp = Hash.new
+                  tmp[erd_hierarchy[idx]] = join_relations
+                  join_relations = tmp
+                  idx -= 1
+                end
+
+                includes(join_relations)
             end
           }
           validate :actable_must_be_valid if validates_actable

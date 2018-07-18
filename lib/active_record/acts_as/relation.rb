@@ -34,18 +34,22 @@ module ActiveRecord
                       end
                 end
 
-                idx = erd_hierarchy.length-2
-                join_relations = Hash.new
-                join_relations[erd_hierarchy[idx]] = erd_hierarchy[idx+1]
-                idx -= 1
-                while idx >= 0
-                  tmp = Hash.new
-                  tmp[erd_hierarchy[idx]] = join_relations
-                  join_relations = tmp
+                if erd_hierarchy.count > 1
+                  idx = erd_hierarchy.length-2
+                  join_relations = Hash.new
+                  join_relations[erd_hierarchy[idx]] = erd_hierarchy[idx+1]
                   idx -= 1
-                end
+                  while idx >= 0
+                    tmp = Hash.new
+                    tmp[erd_hierarchy[idx]] = join_relations
+                    join_relations = tmp
+                    idx -= 1
+                  end
 
-                includes(join_relations)
+                  includes(join_relations)
+                else
+                  includes(name)
+                end
             end
           }
           validate :actable_must_be_valid if validates_actable

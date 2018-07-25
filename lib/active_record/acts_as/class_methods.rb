@@ -20,11 +20,25 @@ module ActiveRecord
       end
 
       def respond_to_missing?(method, include_private = false)
-        acting_as_model.methods_callable_by_submodel.include?(method) || super
+        methods_callable_by_submodel = acting_as_model.methods_callable_by_submodel
+        klass = acting_as_model.try(:acting_as_model)
+        while klass
+          methods_callable_by_submodel << klass.methods_callable_by_submodel
+          klass = klass.try(:acting_as_model)
+        end
+
+        methods_callable_by_submodel.flatten.include?(method) || super
       end
 
       def method_missing(method, *args, &block)
-        if acting_as_model.methods_callable_by_submodel.include?(method)
+        methods_callable_by_submodel = acting_as_model.methods_callable_by_submodel
+        klass = acting_as_model.try(:acting_as_model)
+        while klass
+          methods_callable_by_submodel << klass.methods_callable_by_submodel
+          klass = klass.try(:acting_as_model)
+        end
+
+        if methods_callable_by_submodel.flatten.include?(method)
           result = acting_as_model.public_send(method, *args, &block)
           if result.is_a?(ActiveRecord::Relation)
             all.joins(acting_as_name.to_sym).merge(result)

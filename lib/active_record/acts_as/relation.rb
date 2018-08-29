@@ -23,12 +23,12 @@ module ActiveRecord
                 joins(name)
               else
                 erd_hierarchy = []
-                current_klass = name
+                current_klass = name.to_sym
                 while current_klass.present?
                   erd_hierarchy << current_klass
                   current_klass =
                       begin
-                        current_klass.to_s.classify.constantize.acting_as_model.name.underscore.to_sym
+                        current_klass.to_s.classify.constantize.acting_as_name.to_sym
                       rescue
                         nil
                       end

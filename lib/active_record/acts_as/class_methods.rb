@@ -23,7 +23,7 @@ module ActiveRecord
         methods_callable_by_submodel = acting_as_model.methods_callable_by_submodel
         klass = acting_as_model.try(:acting_as_model)
         while klass
-          methods_callable_by_submodel << klass.methods_callable_by_submodel
+          methods_callable_by_submodel =  methods_callable_by_submodel | klass.methods_callable_by_submodel
           klass = klass.try(:acting_as_model)
         end
 
@@ -34,12 +34,13 @@ module ActiveRecord
         methods_callable_by_submodel = acting_as_model.methods_callable_by_submodel
         klass = acting_as_model.try(:acting_as_model)
         while klass
-          methods_callable_by_submodel << klass.methods_callable_by_submodel
+          methods_callable_by_submodel =  methods_callable_by_submodel | klass.methods_callable_by_submodel
           klass = klass.try(:acting_as_model)
         end
 
-        if methods_callable_by_submodel.flatten.include?(method)
+        if methods_callable_by_submodel.include?(method)
           result = acting_as_model.public_send(method, *args, &block)
+
           if result.is_a?(ActiveRecord::Relation) # if its an activerecord result need to join through acts_as tree
             erd_hierarchy = []
             current_klass = acting_as_name.to_sym
@@ -67,9 +68,10 @@ module ActiveRecord
 
               # unscoping the result being merged ensures the joins don't mess with the includes in the default_scope
               # manually eager_load these associations
-              all.joins(join_relations).eager_load(join_relations).merge(result.unscoped)
+              new = all.joins(join_relations).eager_load(join_relations)
+              new.merge(result)
             else
-              all.joins(acting_as_name.to_sym).eager_load(join_relations).merge(result.unscoped)
+              all.joins(acting_as_name.to_sym).eager_load(join_relations).merge(result)
             end
           else
             result

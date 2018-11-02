@@ -31,15 +31,19 @@ module ActiveRecord
       end
 
       def method_missing(method, *args, &block)
-        methods_callable_by_submodel = acting_as_model.methods_callable_by_submodel
-        klass = acting_as_model.try(:acting_as_model)
-        while klass
-          methods_callable_by_submodel =  methods_callable_by_submodel | klass.methods_callable_by_submodel
-          klass = klass.try(:acting_as_model)
+
+        klass = acting_as_model
+        while klass.present?
+          if klass.methods_callable_by_submodel.include?(method)
+            break
+          else
+            klass = klass.try(:acting_as_model)
+          end
+
         end
 
-        if methods_callable_by_submodel.include?(method)
-          result = acting_as_model.public_send(method, *args, &block)
+        if klass.present?
+          result = klass.public_send(method, *args, &block)
 
           if result.is_a?(ActiveRecord::Relation) # if its an activerecord result need to join through acts_as tree
             erd_hierarchy = []

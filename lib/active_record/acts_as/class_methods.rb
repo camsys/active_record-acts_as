@@ -75,7 +75,7 @@ module ActiveRecord
               new = all.joins(join_relations).eager_load(join_relations)
               new.merge(result)
             else
-              all.joins(acting_as_name.to_sym).eager_load(join_relations).merge(result)
+              all.joins(acting_as_name.to_sym).eager_load(acting_as_name.to_sym).merge(result)
             end
           else
             result

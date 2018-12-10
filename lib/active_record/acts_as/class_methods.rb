@@ -19,6 +19,38 @@ module ActiveRecord
         acting_as_model.where(actable_id: select(:id))
       end
 
+      # get hierarchy of parent models in a hash
+      def actable_hierarchy
+        erd_hierarchy = []
+        current_klass = acting_as_name.to_sym
+        while current_klass.present?
+          erd_hierarchy << current_klass
+          current_klass =
+              begin
+                current_klass.to_s.classify.constantize.acting_as_name.to_sym
+              rescue
+                nil
+              end
+        end
+
+        if erd_hierarchy.count > 1
+          idx = erd_hierarchy.length-2
+          join_relations = Hash.new
+          join_relations[erd_hierarchy[idx]] = erd_hierarchy[idx+1]
+          idx -= 1
+          while idx >= 0
+            tmp = Hash.new
+            tmp[erd_hierarchy[idx]] = join_relations
+            join_relations = tmp
+            idx -= 1
+          end
+
+          join_relations
+        else
+          acting_as_name.to_sym
+        end
+      end
+
       def respond_to_missing?(method, include_private = false)
         methods_callable_by_submodel = acting_as_model.methods_callable_by_submodel
         klass = acting_as_model.try(:acting_as_model)

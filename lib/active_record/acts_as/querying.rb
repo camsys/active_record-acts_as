@@ -46,8 +46,15 @@ module ActiveRecord
     end
 
     module ScopeForCreate
+      # for v = version and 5.2.0 <= v < 5.2.2 you could pass in an attributes but that has since been removed
       def scope_for_create(attributes = nil)
-        scope = ActiveRecord.version.to_s.to_f >= 5.2 ? super(attributes) : where_values_hash
+        activerecord_version = ActiveRecord.version.to_s
+
+        if activerecord_version.include?('5.2.') && activerecord_version.split('.').last.to_i < 2
+          scope = super(attributes)
+        else
+          scope = where_values_hash
+        end
         if acting_as?
           scope.merge!(where_values_hash(acting_as_model.table_name))
         end

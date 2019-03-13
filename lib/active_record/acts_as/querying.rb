@@ -50,7 +50,9 @@ module ActiveRecord
       def scope_for_create(attributes = nil)
         activerecord_version = ActiveRecord.version.to_s
 
-        if activerecord_version.include?('5.2.') && activerecord_version.split('.').last.to_i < 2
+        version_levels = activerecord_version.split('.')
+
+        if version_levels[0].to_i == 5 && version_levels[1].to_i == 2 && version_levels[2].to_i < 2
           scope = super(attributes)
         else
           scope = where_values_hash
